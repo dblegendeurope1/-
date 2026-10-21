@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>香港特工：S3 數學防衛戰 (Math Agents HK)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .glow { box-shadow: 0 0 15px rgba(59, 130, 246, 0.5); }
+    </style>
+</head>
+<body class="bg-slate-900 text-white min-h-screen flex flex-col items-center p-4">
+
+    <!-- Header -->
+    <header class="w-full max-w-2xl flex justify-between items-center py-4 border-b border-slate-700">
+        <div>
+            <h1 class="text-xl font-bold text-blue-400">🇭🇰 香港特工：S3 數學防衛戰</h1>
+            <p class="text-xs text-slate-400">EDB 中三數學課程實戰專區</p>
+        </div>
+        <div class="text-right">
+            <span class="text-sm font-semibold">分數：<span id="score" class="text-yellow-400 text-lg">0</span></span>
+        </div>
+    </header>
+
+    <!-- Main Game Box -->
+    <main class="w-full max-w-2xl bg-slate-800 rounded-xl p-6 mt-6 border border-slate-700 glow">
+        
+        <!-- Stage Info -->
+        <div class="flex justify-between items-center mb-4">
+            <span id="stage-badge" class="bg-blue-600 text-xs px-3 py-1 rounded-full font-bold">關卡 1/3</span>
+            <span id="location-name" class="text-slate-300 text-sm font-medium">📍 數碼港數據中心</span>
+        </div>
+
+        <!-- Question Box -->
+        <div class="bg-slate-950 rounded-lg p-5 mb-6 border border-slate-800 text-center">
+            <p class="text-xs text-slate-400 mb-2" id="scenario">【緊急任務】伺服器流量過載，請化簡加密代數式以重啟系統：</p>
+            <div id="question-text" class="text-xl font-mono font-bold text-emerald-400 py-3">
+                <!-- 題目將動態載入 -->
+            </div>
+        </div>
+
+        <!-- Options Grid -->
+        <div id="options-container" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <!-- 選項將動態載入 -->
+        </div>
+
+        <!-- Feedback & Hint Box -->
+        <div id="feedback-box" class="mt-4 p-3 rounded-lg text-sm hidden"></div>
+
+        <!-- Next Button -->
+        <button id="next-btn" onclick="nextQuestion()" class="w-full mt-4 bg-blue-600 hover:bg-blue-500 font-bold py-3 rounded-lg hidden transition">
+            前往下一個據點 ➔
+        </button>
+
+    </main>
+
+    <!-- Game Over Modal -->
+    <div id="game-over-modal" class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-800 p-6 rounded-xl max-w-md w-full text-center border border-slate-600">
+            <h2 class="text-2xl font-bold text-yellow-400 mb-2">🎉 防衛成功！</h2>
+            <p class="text-slate-300 text-sm mb-4">你已順利修復香港三大城市樞紐系統！</p>
+            <div class="bg-slate-900 p-4 rounded-lg mb-4">
+                <p class="text-gray-400 text-xs">最終成績</p>
+                <p id="final-score" class="text-3xl font-bold text-blue-400">100 分</p>
+                <p id="rank-title" class="text-xs text-emerald-400 mt-1">稱號：香港 S3 數學特工首領</p>
+            </div>
+            <button onclick="restartGame()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6 py-2 rounded-lg transition">
+                再玩一次
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            {
+                stage: "關卡 1/3",
+                location: "📍 數碼港數據中心（指數運算）",
+                scenario: "【任務】伺服器流量過載！請將代數式化簡並以正指數表示：",
+                q: "化簡: (a³ b⁻²)³ / (a⁻² b⁴)",
+                options: [
+                    { text: "a¹¹ / b¹⁰", correct: true },
+                    { text: "a⁷ / b¹⁰", correct: false },
+                    { text: "a¹¹ / b²", correct: false },
+                    { text: "a⁹ / b⁶", correct: false }
+                ],
+                hint: "小提示：先運用 (aⁿ)ᵐ = aⁿᵐ 展開分子，再用同底相除（指數相減）規則！"
+            },
+            {
+                stage: "關卡 2/3",
+                location: "📍 港鐵過海段地底（因式分解）",
+                scenario: "【任務】鑽挖機密碼鎖卡住！請使用「十字相乘法」拆解工程多項式：",
+                q: "因式分解: 6x² - 11x - 10",
+                options: [
+                    { text: "(2x - 5)(3x + 2)", correct: true },
+                    { text: "(2x + 5)(3x - 2)", correct: false },
+                    { text: "(6x - 5)(x + 2)", correct: false },
+                    { text: "(3x - 5)(2x - 2)", correct: false }
+                ],
+                hint: "小提示：注意中間項是 -11x，交叉相乘後：(2x)(-5) + (3x)(2) = -10x + 6x ≠ -11x，試試 (2x)(-5) + (3x)(2)... 重新配對！"
+            },
+            {
+                stage: "關卡 3/3",
+                location: "📍 西九文化區（一元一次不等式）",
+                scenario: "【任務】策劃戶外音樂會發電網！請計算最大音箱接駁數量：",
+                q: "每個音箱耗電 1.5 kW，基本燈光耗電 8 kW。若總電量不超過 35 kW，最多可接駁多少個音箱 (x)？",
+                options: [
+                    { text: "18 個 (x ≤ 18)", correct: true },
+                    { text: "19 個 (x ≤ 18.6)", correct: false },
+                    { text: "17 個 (x < 17)", correct: false },
+                    { text: "28 個 (x ≤ 28)", correct: false }
+                ],
+                hint: "小提示：建立不等式 1.5x + 8 ≤ 35 ➔ 1.5x ≤ 27 ➔ x ≤ 18。音箱數量必須取整數！"
+            }
+        ];
+
+        let currentQ = 0;
+        let score = 0;
+
+        function loadQuestion() {
+            const q = questions[currentQ];
+            document.getElementById('stage-badge').innerText = q.stage;
+            document.getElementById('location-name').innerText = q.location;
+            document.getElementById('scenario').innerText = q.scenario;
+            document.getElementById('question-text').innerText = q.q;
+
+            const container = document.getElementById('options-container');
+            container.innerHTML = '';
+            
+            document.getElementById('feedback-box').classList.add('hidden');
+            document.getElementById('next-btn').classList.add('hidden');
+
+            q.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = "bg-slate-700 hover:bg-slate-600 border border-slate-600 text-left p-4 rounded-lg font-medium transition text-sm flex items-center justify-between";
+                btn.innerHTML = `<span>${String.fromCharCode(65 + idx)}. ${opt.text}</span>`;
+                btn.onclick = () => checkAnswer(opt.correct, q.hint);
+                container.appendChild(btn);
+            });
+        }
+
+        function checkAnswer(isCorrect, hint) {
+            const feedbackBox = document.getElementById('feedback-box');
+            feedbackBox.classList.remove('hidden');
+
+            if (isCorrect) {
+                score += 100;
+                document.getElementById('score').innerText = score;
+                feedbackBox.className = "mt-4 p-3 rounded-lg text-sm bg-emerald-900/60 border border-emerald-500 text-emerald-200";
+                feedbackBox.innerText = "✅ 解密成功！系統警報解除。";
+            } else {
+                feedbackBox.className = "mt-4 p-3 rounded-lg text-sm bg-rose-900/60 border border-rose-500 text-rose-200";
+                feedbackBox.innerText = "❌ 解密失敗！" + hint;
+            }
+
+            // Disable option buttons
+            const btns = document.querySelectorAll('#options-container button');
+            btns.forEach(b => b.disabled = true);
+
+            document.getElementById('next-btn').classList.remove('hidden');
+        }
+
+        function nextQuestion() {
+            currentQ++;
+            if (currentQ < questions.length) {
+                loadQuestion();
+            } else {
+                showGameOver();
+            }
+        }
+
+        function showGameOver() {
+            document.getElementById('game-over-modal').classList.remove('hidden');
+            document.getElementById('final-score').innerText = score + " 分";
+        }
+
+        function restartGame() {
+            currentQ = 0;
+            score = 0;
+            document.getElementById('score').innerText = score;
+            document.getElementById('game-over-modal').classList.add('hidden');
+            loadQuestion();
+        }
+
+        // Initialize Game
+        loadQuestion();
+    </script>
+</body>
+</html>
